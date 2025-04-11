@@ -3,8 +3,8 @@ const bookData = {
   name: "Series",
   children: [
     {
-      name: "Book 1",
-      wordCount: 95000,
+      name: "Inferno",
+      wordCount: 34,
       children: [
         {
           name: "Chapter 1",
@@ -33,8 +33,8 @@ const bookData = {
       ]
     },
     {
-      name: "Book 2",
-      wordCount: 82000,
+      name: "Purgatorio",
+      wordCount: 33,
       children: [
         {
           name: "Chapter 1",
@@ -71,8 +71,8 @@ const bookData = {
       ]
     },
     {
-      name: "Book 3",
-      wordCount: 110000,
+      name: "Paradiso",
+      wordCount: 33,
       children: [
         {
           name: "Chapter 1",
