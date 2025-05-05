@@ -292,7 +292,7 @@ function initializeVisualization(bookData) {
     }
     
     currentLevel = "lines";
-    updateTitle(`Lines in ${cantoName} - (${canticleName})`);
+    updateTitle(`Lines in ${cantoName}, ${canticleName}`);
     
     const chartWidth = width - margin.left - margin.right;
     const chartHeight = height - margin.top - margin.bottom;
@@ -339,12 +339,34 @@ function initializeVisualization(bookData) {
       .data(lines)
       .join("g");
     
-    barGroups.append("rect")
+    const bars = barGroups.append("rect")
       .attr("x", x(0))
       .attr("y", d => y(d.name))
-      .attr("width", d => x(d.wordCount) - x(0))
+      .attr("width", 0) // start with width 0 for transition
       .attr("height", y.bandwidth())
-      .attr("fill", "#FD8D3C");
+      .attr("fill", "#FD8D3C")
+      .attr("cursor", "pointer");
+
+    // Attach click handler BEFORE transition
+    bars.on("click", (event, d) => {
+      event.stopPropagation();
+      navigationHistory.push({ level: "lines", parent: currentParent });
+      currentParent = d;
+
+      const centerX = x(d.wordCount);
+      const centerY = y(d.name) + y.bandwidth() / 2;
+
+      zoomToElement(centerX, centerY, 2.5, () => {
+        renderWords(d.children, d.name, cantoName, canticleName);
+      });
+    });
+
+    // THEN apply transition
+    bars.transition()
+      .duration(750)
+      .attr("width", d => x(d.wordCount) - x(0));
+
+
 
     /*barGroups.append("text")
       .attr("x", d => x(d.wordCount) + 5)
@@ -358,11 +380,106 @@ function initializeVisualization(bookData) {
     backButton.transition().duration(300).style("opacity", 1);
   }
 
+  // Function to render chapters view
+  function renderWords(words, lineNum, cantoName, canticleName) {
+    if (!words || words.length === 0) {
+      console.error("No word data available to render");
+      return;
+    }
+    
+    currentLevel = "words";
+    updateTitle(`Words of ${lineNum}, ${cantoName}, ${canticleName}`);
+    
+    const chartWidth = width - margin.left - margin.right;
+    const chartHeight = height - margin.top - margin.bottom;
+    
+    // Remove any existing bars
+    g.selectAll(".bar-group").remove();
+    
+    // Create scales
+    const x = d3.scaleBand()
+      .domain(words.map(d => d.name))
+      .range([margin.left, width - margin.right])
+      .padding(0.2);
+    
+    const y = d3.scaleLinear()
+      .domain([0, d3.max(words, d => d.syllCount)])
+      .nice()
+      .range([height - margin.bottom, margin.top]);
+    
+    // Update axes
+    const xAxis = g => g
+      .attr("transform", `translate(0,${height - margin.bottom})`)
+      .call(d3.axisBottom(x))
+      .selectAll("text")
+      .style("text-anchor", "middle");
+    
+    const yAxis = g => g
+      .attr("transform", `translate(${margin.left},0)`)
+      .call(d3.axisLeft(y).ticks(null, "s"))
+      .call(g => g.append("text")
+        .attr("x", -margin.left)
+        .attr("y", 10)
+        .attr("fill", "currentColor")
+        .attr("text-anchor", "start")
+        .text("Syllable Count"));
+    
+    // Remove previous axes
+    g.selectAll(".x-axis").remove();
+    g.selectAll(".y-axis").remove();
+    
+    // Add new axes
+    g.append("g")
+      .attr("class", "x-axis")
+      .call(xAxis);
+    
+    g.append("g")
+      .attr("class", "y-axis")
+      .call(yAxis);
+    
+    // Create bar groups
+    const barGroups = g.append("g")
+      .attr("class", "bar-group")
+      .selectAll("g")
+      .data(words)
+      .join("g")
+      .attr("cursor", "pointer");
+    
+    // Add bars with transition
+    barGroups.append("rect")
+      .attr("x", d => x(d.name))
+      .attr("y", height - margin.bottom)
+      .attr("width", x.bandwidth())
+      .attr("height", 0)
+      .attr("fill", "#82CA9D")
+      .transition()
+      .duration(750)
+      .attr("y", d => y(d.syllCount))
+      .attr("height", d => y(0) - y(d.syllCount));
+    
+    /*/ Add labels
+    barGroups.append("text")
+      .attr("x", d => x(d.name) + x.bandwidth() / 2)
+      .attr("y", d => y(d.lineCount) - 5)
+      .attr("text-anchor", "middle")
+      .attr("opacity", 0)
+      .text(d => d3.format(",")(d.lineCount))
+      .style("font-size", "12px")
+      .transition()
+      .delay(300)
+      .duration(400)
+      .attr("opacity", 1);*/
+    
+    // Show back button
+    backButton.transition().duration(300).style("opacity", 1);
+  }
+
   // Function to handle back button clicks
   function goBack() {
     if (navigationHistory.length === 0) return;
     
     const previous = navigationHistory.pop();
+    const grandparent = navigationHistory[0];
     
     // Zoom out first, then render previous view
     zoomToElement(width / 2, height / 2, 1, () => {
@@ -374,6 +491,14 @@ function initializeVisualization(bookData) {
           renderCantos(currentParent.children, currentParent.name);
         } else {
           console.error("Invalid parent data for cantos view");
+          renderCanticles(bookData.children || []);
+        }
+      } else if (previous.level === "lines") {
+        currentParent = previous.parent;
+        if (currentParent && currentParent.children) {
+          renderLines(currentParent.children, currentParent.name, grandparent.name);
+        } else {
+          console.error("Invalid parent data for lines view");
           renderCanticles(bookData.children || []);
         }
       }
