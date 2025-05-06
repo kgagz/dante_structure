@@ -11,16 +11,26 @@ fetch("restructured_commedia.json")
 
 function initializeVisualization(bookData) {
   // DOM elements
-  const width = 800;
-  const height = 500;
-  const margin = { top: 50, right: 40, bottom: 60, left: 60 };
 
-  // Create svg element
+  
+  const container = document.getElementById("chart-container");
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+  window.addEventListener("resize", () => {
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+    // Re-render or update chart dimensions here
+  });
+
+    // Create svg element
   const svg = d3.create("svg")
     .attr("width", width)
     .attr("height", height)
     .attr("viewBox", [0, 0, width, height])
-    .attr("style", "max-width: 100%; height: auto;");
+    .attr("style", "max-width: 90%; height: 90%;");
+  
+  const margin = { top: 50, right: 40, bottom: 60, left: 60 };
+
 
   // Create main container group that will be transformed during zooming
   const g = svg.append("g")
@@ -594,7 +604,7 @@ function initializeVisualization(bookData) {
     .attr("dominant-baseline", "middle")
     .style("font-size", "20px")
     .text("−");
-
-  // Add the SVG to the DOM
+  
   document.getElementById("chart-container").appendChild(svg.node());
+
 }
