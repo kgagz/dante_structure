@@ -12,6 +12,8 @@ fetch("restructured_commedia.json")
 function initializeVisualization(bookData) {
   // DOM elements
 
+  let isNavigating = false;
+
   
   const container = document.getElementById("chart-container");
   const width = container.clientWidth;
@@ -162,6 +164,7 @@ function initializeVisualization(bookData) {
         .attr("fill", "#6495ED")
         .attr("cursor", "pointer")
         .on("click", (event, d) => {
+          event.stopPropagation()
           // Improved navigation history tracking
           navigationHistory.push({ 
             level: "canticles", 
@@ -256,6 +259,7 @@ function initializeVisualization(bookData) {
         .attr("fill", "#6495ED")
         .attr("cursor", "pointer")
         .on("click", (event, line) => {
+          event.stopPropagation()
         
           // Improved navigation history tracking
           navigationHistory.push({ 
@@ -355,6 +359,7 @@ function initializeVisualization(bookData) {
 
     // Attach click handler BEFORE transition
     bars.on("click", (event, d) => {
+      event.stopPropagation()
       // Improved navigation history tracking
       navigationHistory.push({ 
         level: "lines", 
@@ -458,10 +463,18 @@ function initializeVisualization(bookData) {
 
   // Completely rewritten goBack function with better error handling
   function goBack() {
+    if (isNavigating) {
+      console.log("Currently busy navigating...");
+      return;
+    }
     if (navigationHistory.length === 0) {
       console.log("No navigation history available");
       return;
     }
+
+    isNavigating = true; // lock navigation
+    // Show back button
+    backButton.transition().duration(300).style("opacity", 0);
     
     // Pop the most recent navigation state
     const previous = navigationHistory.pop();
@@ -525,6 +538,8 @@ function initializeVisualization(bookData) {
             renderCanticles(bookData.children);
         }
       });
+    
+    isNavigating = false;
   }
 
   // Function to zoom to a specific element
