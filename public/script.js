@@ -111,7 +111,7 @@ function initializeVisualization(bookData) {
 
     // Height of each canto block based on line count
     const heightScale = d3.scaleLinear()
-      .domain([minLineCount / 2, maxLineCount])
+      .domain([minLineCount - 10, maxLineCount])
       .range([4, y.bandwidth()]);
 
     const barGroup = g.append("g").attr("class", "bar-group");
@@ -171,107 +171,85 @@ function initializeVisualization(bookData) {
       console.error("No canto data available to render");
       return;
     }
-    
+
     currentLevel = "cantos";
-    updateTitle(`Cantos of ${canticleName}`);
-    
+    updateTitle(`${canticleName} Cantos`);
+    svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
+
+    g.selectAll(".bar-group").remove();
+    g.selectAll(".x-axis").remove();
+    g.selectAll(".y-axis").remove();
+
     const chartWidth = width - margin.left - margin.right;
     const chartHeight = height - margin.top - margin.bottom;
-    
-    // Remove any existing bars
-    g.selectAll(".bar-group").remove();
-    
-    // Create scales
+
+    const maxLines = d3.max(cantos, d => d.children.length);
+    const maxWords = d3.max(cantos.flatMap(c => c.children.map(l => l.wordCount)));
+
+    // One vertical bar per canto
     const x = d3.scaleBand()
       .domain(cantos.map(d => d.name))
       .range([margin.left, width - margin.right])
       .padding(0.2);
-    
-    const y = d3.scaleLinear()
-      .domain([0, d3.max(cantos, d => d.lineCount)])
-      .nice()
-      .range([height - margin.bottom, margin.top]);
-    
-    // Update axes
-    const xAxis = g => g
-      .attr("transform", `translate(0,${height - margin.bottom})`)
-      .call(d3.axisBottom(x))
-      .selectAll("text")
-      .style("text-anchor", "middle");
-    
-    const yAxis = g => g
-      .attr("transform", `translate(${margin.left},0)`)
-      .call(d3.axisLeft(y).ticks(null, "s"))
-      .call(g => g.append("text")
-        .attr("x", -margin.left)
-        .attr("y", 10)
-        .attr("fill", "currentColor")
-        .attr("text-anchor", "start")
-        .text("Line Count"));
-    
-    // Remove previous axes
-    g.selectAll(".x-axis").remove();
-    g.selectAll(".y-axis").remove();
-    
-    // Add new axes
-    g.append("g")
-      .attr("class", "x-axis")
-      .call(xAxis);
-    
-    g.append("g")
-      .attr("class", "y-axis")
-      .call(yAxis);
-    
-    // Create bar groups
-    const barGroups = g.append("g")
-      .attr("class", "bar-group")
-      .selectAll("g")
+
+    // Line height scale for stacking upward
+    const lineHeightScale = d3.scaleLinear()
+      .domain([0, maxLines])
+      .range([0, chartHeight]);
+
+    // Word count width scale (controls jagged edge)
+    const wordScale = d3.scaleLinear()
+      .domain([0, maxWords])
+      .range([0, x.bandwidth()]);
+
+    const barGroup = g.append("g")
+      .attr("class", "bar-group");
+
+    const cantoGroups = barGroup.selectAll(".canto")
       .data(cantos)
       .join("g")
-      .attr("cursor", "pointer")
-      .on("click", (event, d) => {
-        event.stopPropagation();
-        navigationHistory.push({ level: "cantos", parent: currentParent });
-        currentParent = d;
-        
-        // Store the position to zoom to
-        const centerX = x(d.name) + x.bandwidth() / 2;
-        const centerY = y(d.lineCount) / 2;
-        
-        // Perform zoom transition then render pages
-        zoomToElement(centerX, centerY, 2.5, () => {
-          renderLines(d.children, d.name, canticleName);
+      .attr("class", "canto")
+      .attr("transform", d => `translate(${x(d.name)}, ${height - margin.bottom})`);
+
+    cantoGroups.each(function (canto) {
+      const group = d3.select(this);
+      const lines = canto.children;
+      const segmentHeight = (chartHeight / maxLines);
+
+      group.selectAll(".line-segment")
+        .data(lines)
+        .join("rect")
+        .attr("class", "line-segment")
+        .attr("x", 0)
+        .attr("y", (d, i) => -segmentHeight * (i + 1) * .98) // stack upward from bottom
+        .attr("width", d => wordScale(d.wordCount))
+        .attr("height", segmentHeight)
+        .attr("fill", "#6495ED")
+        .attr("cursor", "pointer")
+        .on("click", (event, line) => {
+          navigationHistory.push({ level: "cantos", parent: currentParent });
+          currentParent = line;
+          renderLines(line.children, line.name, canto.name);
         });
-      });
-    
-    // Add bars with transition
-    barGroups.append("rect")
-      .attr("x", d => x(d.name))
-      .attr("y", height - margin.bottom)
-      .attr("width", x.bandwidth())
-      .attr("height", 0)
-      .attr("fill", "#82CA9D")
-      .transition()
-      .duration(750)
-      .attr("y", d => y(d.lineCount))
-      .attr("height", d => y(0) - y(d.lineCount));
-    
-    /*/ Add labels
-    barGroups.append("text")
-      .attr("x", d => x(d.name) + x.bandwidth() / 2)
-      .attr("y", d => y(d.lineCount) - 5)
-      .attr("text-anchor", "middle")
-      .attr("opacity", 0)
-      .text(d => d3.format(",")(d.lineCount))
-      .style("font-size", "12px")
-      .transition()
-      .delay(300)
-      .duration(400)
-      .attr("opacity", 1);*/
-    
-    // Show back button
+
+      // Optional: add canto label below bar
+      group.append("text")
+        .attr("x", x.bandwidth() / 2)
+        .attr("y", 14)
+        .attr("text-anchor", "middle")
+        .attr("font-size", "10px")
+        .text(canto.name);
+    });
+
+    // Axes
+    g.append("g")
+      .attr("class", "x-axis")
+      .attr("transform", `translate(0,${height - margin.bottom})`)
+      .call(d3.axisBottom(x).tickSize(0).tickPadding(6));
+
     backButton.transition().duration(300).style("opacity", 1);
   }
+
 
   // Function to render pages view
   function renderLines(lines, cantoName, canticleName) {
