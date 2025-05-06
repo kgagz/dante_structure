@@ -79,100 +79,89 @@ function initializeVisualization(bookData) {
   // Initialize with book-level view
   renderCanticles(bookData.children || []);
 
-  // Function to render books view
   function renderCanticles(canticles) {
-    // Check if books is defined and has items
     if (!canticles || canticles.length === 0) {
       console.error("No canticle data available to render");
       return;
     }
-    
+
     currentLevel = "canticles";
     updateTitle("Divine Comedy - Canticles");
-    
-    // Reset zoom transform
     svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
-    
-    const chartWidth = width - margin.left - margin.right;
-    const chartHeight = height - margin.top - margin.bottom;
-    
-    // Remove any existing bars
+
     g.selectAll(".bar-group").remove();
-    
-    // Horizontal bar setup for Canticles
+    g.selectAll(".x-axis").remove();
+    g.selectAll(".y-axis").remove();
+
+    const maxCantoCount = d3.max(canticles, d => d.children.length);
+    const allLineCounts = canticles.flatMap(d => d.children.map(c => c.lineCount));
+    const maxLineCount = d3.max(allLineCounts);
+    const minLineCount = d3.min(allLineCounts);
+
+    // Horizontal scale for canto index
     const x = d3.scaleLinear()
-      .domain([0, d3.max(canticles, d => d.cantoCount)])
-      .nice()
+      .domain([0, maxCantoCount])
       .range([margin.left, width - margin.right]);
 
+    // Vertical space per canticle
     const y = d3.scaleBand()
       .domain(canticles.map(d => d.name))
       .range([margin.top, height - margin.bottom])
-      .padding(0.2);
+      .padding(0.3);
 
-    // Axes
-    const xAxis = g => g
-      .attr("transform", `translate(0,${margin.top})`)
-      .call(d3.axisTop(x).ticks(null, "s"));
+    // Height of each canto block based on line count
+    const heightScale = d3.scaleLinear()
+      .domain([minLineCount / 2, maxLineCount])
+      .range([4, y.bandwidth()]);
 
-    const yAxis = g => g
+    const barGroup = g.append("g").attr("class", "bar-group");
+
+    const canticleGroups = barGroup.selectAll(".canticle")
+      .data(canticles)
+      .join("g")
+      .attr("class", "canticle")
+      .attr("transform", d => `translate(0, ${y(d.name)})`);
+
+    canticleGroups.each(function (canticle) {
+      const group = d3.select(this);
+      const cantoCount = canticle.children.length;
+      const segmentWidth = (x(1) - x(0)) * 1.2; // 100% width of each unit, no spacing
+
+      group.selectAll(".canto-bar")
+        .data(canticle.children)
+        .join("rect")
+        .attr("class", "canto-bar")
+        .attr("x", (d, i) => x(i))
+        .attr("y", d => y.bandwidth() - heightScale(d.lineCount))
+        .attr("width", segmentWidth)
+        .attr("height", d => heightScale(d.lineCount))
+        .attr("fill", "#6495ED")
+        .attr("cursor", "pointer")
+        .on("click", (event, d) => {
+          currentParent = canticle;
+          navigationHistory.push({ level: "canticles", parent: null });
+          currentParent = d
+          const centerX = x(d.index || 0);
+          const centerY = y(canticle.name) + y.bandwidth() / 2;
+          renderCantos(canticle.children, canticle.name);
+          /*zoomToElement(centerX, centerY, 2.5, () => {
+            renderCantos(canticle.children, canticle.name);
+          });*/
+        });
+    });
+
+    // Y-axis (canticle labels)
+    g.append("g")
+      .attr("class", "y-axis")
       .attr("transform", `translate(${margin.left},0)`)
       .call(d3.axisLeft(y));
 
-    // Remove previous axes
-    g.selectAll(".x-axis").remove();
-    g.selectAll(".y-axis").remove();
-    
-    // Add new axes
+    // X-axis (canto index)
     g.append("g")
       .attr("class", "x-axis")
-      .call(xAxis);
-    
-    g.append("g")
-      .attr("class", "y-axis")
-      .call(yAxis);
-    
-    // Create bar groups
-    const barGroups = g.append("g")
-      .attr("class", "bar-group")
-      .selectAll("g")
-      .data(canticles)
-      .join("g");
+      .attr("transform", `translate(0, ${margin.top})`)
+      .call(d3.axisTop(x).ticks(10).tickFormat(d => `${d} cantos`));
 
-    // Add bars (with click handler)
-    barGroups.append("rect")
-      .attr("x", x(0))
-      .attr("y", d => y(d.name))
-      .attr("width", d => x(d.cantoCount) - x(0))
-      .attr("height", y.bandwidth())
-      .attr("fill", "#6495ED")
-      .attr("cursor", "pointer")
-      .on("click", (event, d) => {
-        event.stopPropagation();
-        currentParent = d;
-        navigationHistory.push({ level: "canticles", parent: null });
-
-        // Horizontal layout: centerY is vertical center of the bar
-        const centerX = x(d.cantoCount); // center of bar horizontally
-        const centerY = y(d.name) + y.bandwidth() / 2; // vertical center of the bar
-
-        zoomToElement(centerX, centerY, 2.5, () => {
-          renderCantos(d.children, d.name);
-        });
-      });
-
-    
-
-    /*barGroups.append("text")
-      .attr("x", d => x(d.cantoCount) + 5)
-      .attr("y", d => y(d.name) + y.bandwidth() / 2)
-      .attr("dominant-baseline", "middle")
-      .text(d => `${d.cantoCount} cantos`)
-      .style("font-size", "11px")
-      .style("fill", "#555");
-    */
-    
-    // Hide back button
     backButton.transition().duration(300).style("opacity", 0);
   }
 
@@ -349,16 +338,9 @@ function initializeVisualization(bookData) {
 
     // Attach click handler BEFORE transition
     bars.on("click", (event, d) => {
-      event.stopPropagation();
       navigationHistory.push({ level: "lines", parent: currentParent });
       currentParent = d;
-
-      const centerX = x(d.wordCount);
-      const centerY = y(d.name) + y.bandwidth() / 2;
-
-      zoomToElement(centerX, centerY, 2.5, () => {
-        renderWords(d.children, d.name, cantoName, canticleName);
-      });
+      renderWords(d.children, d.name, cantoName, canticleName);
     });
 
     // THEN apply transition
@@ -474,14 +456,12 @@ function initializeVisualization(bookData) {
     backButton.transition().duration(300).style("opacity", 1);
   }
 
-  // Function to handle back button clicks
   function goBack() {
     if (navigationHistory.length === 0) return;
-    
+
     const previous = navigationHistory.pop();
-    const grandparent = navigationHistory[0];
-    
-    // Zoom out first, then render previous view
+    const grandparent = navigationHistory.length > 0 ? navigationHistory[navigationHistory.length - 1].parent : null;
+
     zoomToElement(width / 2, height / 2, 1, () => {
       if (previous.level === "canticles") {
         renderCanticles(bookData.children || []);
@@ -495,7 +475,9 @@ function initializeVisualization(bookData) {
         }
       } else if (previous.level === "lines") {
         currentParent = previous.parent;
-        if (currentParent && currentParent.children) {
+        if (currentParent && currentParent.children && grandparent) {
+          console.log(currentParent.name);
+          console.log(grandparent.name);
           renderLines(currentParent.children, currentParent.name, grandparent.name);
         } else {
           console.error("Invalid parent data for lines view");
@@ -504,6 +486,7 @@ function initializeVisualization(bookData) {
       }
     });
   }
+
 
   // Function to zoom to a specific element
   function zoomToElement(x, y, scale, callback) {
