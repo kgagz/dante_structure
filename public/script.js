@@ -125,7 +125,7 @@ function initializeVisualization(bookData) {
 
     // Height of each canto block based on line count
     const heightScale = d3.scaleLinear()
-      .domain([minLineCount / 2, maxLineCount])
+      .domain([minLineCount - 10, maxLineCount])
       .range([4, y.bandwidth()]);
 
     const barGroup = g.append("g").attr("class", "bar-group");
@@ -188,7 +188,7 @@ function initializeVisualization(bookData) {
       console.error("No canto data available to render");
       return;
     }
-    
+
     currentLevel = "cantos";
     updateTitle(`Cantos of ${canticleName}`);
     svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
