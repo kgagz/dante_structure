@@ -84,7 +84,7 @@ function initializeVisualization(bookData) {
 
   // Setup zoom behavior
   const zoom = d3.zoom()
-    .scaleExtent([0.5, 8])
+    .scaleExtent([0.1, 8])
     .on("zoom", zoomed);
 
   svg.call(zoom);
@@ -314,11 +314,11 @@ function initializeVisualization(bookData) {
     const x = d3.scaleLinear()
       .domain([0, d3.max(lines, d => d.wordCount)])
       .nice()
-      .range([margin.left, width - margin.right]);
+      .range([margin.left, (width - margin.right) * 0.25]);
 
     const y = d3.scaleBand()
       .domain(lines.map(d => d.name))
-      .range([margin.top, height - margin.bottom])
+      .range([margin.top, (height - margin.bottom) * 4])
       .padding(0.1);
 
     const xAxis = g => g
