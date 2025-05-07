@@ -31,7 +31,7 @@ function initializeVisualization(bookData) {
     .attr("viewBox", [0, 0, width, height])
     .attr("style", "max-width: 90%; height: 90%;");
   
-  const margin = { top: 50, right: 40, bottom: 60, left: 60 };
+  const margin = { top: 50, right: 80, bottom: 60, left: 80 };
 
 
   // Create main container group that will be transformed during zooming
@@ -295,6 +295,7 @@ function initializeVisualization(bookData) {
         .attr("y", 14)
         .attr("text-anchor", "middle")
         .attr("font-size", "10px")
+        .attr("font-family", "'IM Fell English SC', serif")
         .text(canto.name);
     });
 
@@ -397,6 +398,7 @@ function initializeVisualization(bookData) {
       .attr("dy", "0.35em")
       .attr("fill", d => (x(d.wordCount) - x(0)) > 40 ? "white" : "#333")
       .attr("font-size", "12px")
+      .attr("font-family", "'IM Fell English SC', serif")
       .attr("pointer-events", "none")
       .text(d => 
           d.first_letter 
@@ -411,6 +413,7 @@ function initializeVisualization(bookData) {
       .attr("y", d => y(d.name) + y.bandwidth() / 2) // ← this is the missing part!
       .attr("dy", "0.35em")
       .attr("fill", "#333")
+      .attr("font-family", "'IM Fell English SC', serif")
       .attr("font-size", "12px")
       .attr("pointer-events", "none")
       .text(d => `${d.rhyme}`)
@@ -458,6 +461,7 @@ function initializeVisualization(bookData) {
       .attr("transform", `translate(0,${height - margin.bottom})`)
       .call(d3.axisBottom(x))
       .selectAll("text")
+      .attr("font-family", "'IM Fell English SC', serif")
       .style("text-anchor", "middle");
     
     const yAxis = g => g
@@ -466,6 +470,7 @@ function initializeVisualization(bookData) {
       .call(g => g.append("text")
         .attr("x", -margin.left)
         .attr("y", 10)
+        .attr("font-family", "'IM Fell English SC', serif")
         .attr("fill", "currentColor")
         .attr("text-anchor", "start")
         .text("Syllable Count"));
@@ -633,6 +638,7 @@ function initializeVisualization(bookData) {
     .attr("x", 15)
     .attr("y", 20)
     .attr("text-anchor", "middle")
+    .attr("font-family", "'IM Fell English SC', serif")
     .attr("dominant-baseline", "middle")
     .style("font-size", "20px")
     .text("+");
@@ -659,6 +665,7 @@ function initializeVisualization(bookData) {
     .attr("y", 20)
     .attr("text-anchor", "middle")
     .attr("dominant-baseline", "middle")
+    .attr("font-family", "'IM Fell English SC', serif")
     .style("font-size", "20px")
     .text("−");
   
