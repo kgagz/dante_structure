@@ -119,6 +119,14 @@ function initializeVisualization(bookData) {
     g.selectAll(".x-axis").remove();
     g.selectAll(".y-axis").remove();
 
+    // Desired visual order from top to bottom
+    const canticleOrder = ["Inferno", "Purgatorio", "Paradiso"];
+
+    // Sort canticles by that order
+    canticles.sort((a, b) => 
+      canticleOrder.indexOf(a.name) - canticleOrder.indexOf(b.name)
+    );
+
     const maxCantoCount = d3.max(canticles, d => d.children.length);
     const allLineCounts = canticles.flatMap(d => d.children.map(c => c.lineCount));
     const maxLineCount = d3.max(allLineCounts);
