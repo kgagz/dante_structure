@@ -115,6 +115,8 @@ function initializeVisualization(bookData) {
     svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
 
     // Clear old elements
+    g.selectAll(".y-axis-label").remove();
+    d3.selectAll(".tooltip").remove();
     g.selectAll(".bar-group").remove();
     g.selectAll(".x-axis").remove(); // remove top x-axis
     g.selectAll(".y-axis").remove();
@@ -233,6 +235,8 @@ function initializeVisualization(bookData) {
 
     
     // Clear previous elements
+    g.selectAll(".y-axis-label").remove();
+    d3.selectAll(".tooltip").remove();
     g.selectAll(".bar-group").remove();
     g.selectAll(".x-axis").remove();
     g.selectAll(".y-axis").remove();
@@ -357,6 +361,8 @@ function initializeVisualization(bookData) {
     updateTitle(`${canticleName} ${cantoName}`);
     
     // Clear previous elements
+    g.selectAll(".y-axis-label").remove();
+    d3.selectAll(".tooltip").remove();
     g.selectAll(".bar-group").remove();
     g.selectAll(".x-axis").remove();
     g.selectAll(".y-axis").remove();
@@ -479,6 +485,8 @@ function initializeVisualization(bookData) {
     
     // Clear previous elements
     g.selectAll(".bar-group").remove();
+    g.selectAll(".y-axis-label").remove();
+    d3.selectAll(".tooltip").remove();
     g.selectAll(".x-axis").remove();
     g.selectAll(".y-axis").remove();
     
@@ -503,14 +511,14 @@ function initializeVisualization(bookData) {
     
     const yAxis = g => g
       .attr("transform", `translate(${margin.left},0)`)
-      .call(d3.axisLeft(y).ticks(null, "s"))
+      .call(d3.axisLeft(y).ticks(d3.max(words, d => d.syllCount)).tickFormat(d3.format("d")))
       .call(g => g.append("text")
         .attr("x", -margin.left)
         .attr("y", 10)
         .attr("font-family", "'IM Fell English SC', serif")
         .attr("fill", "currentColor")
-        .attr("text-anchor", "start")
-        .text("Syllable Count"));
+        .attr("text-anchor", "start"));
+
     
     // Add new axes
     g.append("g")
@@ -520,6 +528,18 @@ function initializeVisualization(bookData) {
     g.append("g")
       .attr("class", "y-axis")
       .call(yAxis);
+    
+    g.append("text")
+      .attr("class", "y-axis-label")
+      .attr("text-anchor", "middle")
+      .attr("transform", `rotate(-90)`)
+      .attr("x", -(margin.top + (height - margin.top - margin.bottom) / 2))
+      .attr("y", margin.left - 40) // adjust as needed
+      .attr("font-family", "'IM Fell English SC', serif")
+      .attr("font-size", "14px")
+      .attr("fill", "#333")
+      .text("Syllable Count");
+
     
     // Create bar groups
     const barGroups = g.append("g")
@@ -540,6 +560,17 @@ function initializeVisualization(bookData) {
       .duration(750)
       .attr("y", d => y(d.syllCount))
       .attr("height", d => y(0) - y(d.syllCount));
+    
+    // Add text for each bar
+    barGroups.append("text")
+      .text(d => d.text)  // Use each word's .text
+      .attr("x", d => x(d.name) + x.bandwidth() / 2)
+      .attr("y", d => y(d.syllCount) + 14)
+      .attr("fill", "white")
+      .attr("text-anchor", "middle")
+      .attr("font-size", "18px")
+      .attr("font-family", "'IM Fell English SC', serif")
+      .attr("pointer-events", "none");
     
     // Show back button
     backButton.transition().duration(300).style("opacity", 1);

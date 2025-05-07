@@ -30,6 +30,7 @@ def read_canticle(canticle):
     data = {}
     rhyme_data = {}
     first_letter_data = {}
+    word_data = {}
     get_arabic_num = Solution()
     canto_num = 0
     with open(f"../text/{canticle}_syllnew.txt", "r", encoding="utf-8") as file:
@@ -50,6 +51,7 @@ def read_canticle(canticle):
                 data[canto_num] = {}
                 rhyme_data[canto_num] = {}
                 first_letter_data[canto_num] = {}
+                word_data[canto_num] = {}
                 continue
             else:
                 # input(f"in else statement")
@@ -57,11 +59,12 @@ def read_canticle(canticle):
                 # input(f"line[:4].strip(): {line_num}")
                 line_num = int(line_num)
                 # print(f"line_num: {line_num}")
-                clean = re.sub(r"[\\,\.!;:?»\n\"'‘’`]", "", line[4:])
+                clean = re.sub(r"[\\,\.!;:?»\n\"'‘’`\"”“]", "", line[4:])
                 words = clean.split()
                 # if canticle == "purgatorio" and canto_num == 12 and line_num == 110:
                 # input(f"words: {words}")
                 data[canto_num][line_num] = {}
+                word_data[canto_num][line_num] = {}
                 rhyme = ("").join(words[-1].split("|")[-2:])
                 rhyme = re.sub(
                     r"^.*?(?=([aeiouàáâäæãåāèéêëēėęîïíīįìôöòóœøōõûüùúūÿ])(?![aeiouàáâäæãåāèéêëēėęîïíīįìôöòóœøōõûüùúūÿ]))",
@@ -78,8 +81,11 @@ def read_canticle(canticle):
                     # input(words[i].split("|"))
                     # input(len(words[i].split("|")) - 1)
                     data[canto_num][line_num][i + 1] = len(words[i].split("|")) - 1
+                    word = words[i].replace("�", "")
+                    word = word.replace("|", "")
+                    word_data[canto_num][line_num][i + 1] = word
                 continue
-    return data, rhyme_data, first_letter_data
+    return data, rhyme_data, first_letter_data, word_data
 
 
 def main():
@@ -87,19 +93,26 @@ def main():
     data = {}
     rhyme_data = {}
     first_letter_data = {}
+    word_data = {}
     for canticle in tqdm(canticles):
-        data[canticle], rhyme_data[canticle], first_letter_data[canticle] = (
-            read_canticle(canticle)
-        )
+        (
+            data[canticle],
+            rhyme_data[canticle],
+            first_letter_data[canticle],
+            word_data[canticle],
+        ) = read_canticle(canticle)
 
     with open("../text/commedia_structure.json", "w") as f:
-        json.dump(data, f, indent=4, sort_keys=True, ensure_ascii=False)
+        json.dump(data, f, indent=4, sort_keys=True, ensure_ascii=True)
 
     with open("../text/commedia_rhymes.json", "w") as f:
-        json.dump(rhyme_data, f, indent=4, sort_keys=True, ensure_ascii=False)
+        json.dump(rhyme_data, f, indent=4, sort_keys=True, ensure_ascii=True)
 
     with open("../text/commedia_line_letters.json", "w") as f:
-        json.dump(first_letter_data, f, indent=4, sort_keys=True, ensure_ascii=False)
+        json.dump(first_letter_data, f, indent=4, sort_keys=True, ensure_ascii=True)
+
+    with open("../text/commedia_words.json", "w") as f:
+        json.dump(word_data, f, indent=4, sort_keys=True, ensure_ascii=True)
 
 
 if __name__ == "__main__":
