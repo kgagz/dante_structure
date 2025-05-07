@@ -9,6 +9,12 @@ fetch("restructured_commedia.json")
   })
   .catch(error => console.error("Error fetching JSON:", error));
 
+const canticleColors = {
+  Inferno: "#d73027",     // Fiery red
+  Purgatorio: "#1a9850",  // Green
+  Paradiso: "#91bfdb"     // Light blue
+};
+
 function initializeVisualization(bookData) {
   // DOM elements
 
@@ -180,7 +186,7 @@ function initializeVisualization(bookData) {
         .attr("y", d => y.bandwidth() - heightScale(d.lineCount))
         .attr("width", segmentWidth)
         .attr("height", d => heightScale(d.lineCount))
-        .attr("fill", "#6495ED")
+        .attr("fill", d => canticleColors[canticle.name] || "#6495ED")
         .attr("cursor", "pointer")
         .on("click", (event, d) => {
           event.stopPropagation();
@@ -242,11 +248,17 @@ function initializeVisualization(bookData) {
     g.selectAll(".y-axis").remove();
 
     const chartWidth = width - margin.left - margin.right;
+    backButton.transition().duration(300).style("opacity", 1);
     const chartHeight = height - margin.top - margin.bottom;
 
     const maxLines = d3.max(cantos, d => d.children.length);
     const maxWords = d3.max(cantos.flatMap(c => c.children.map(l => l.wordCount)));
-    
+
+    const centerY = margin.top + (height - margin.top - margin.bottom) / 2;
+    const maxLinesInAnyCanto = d3.max(cantos, d => d.children.length);
+    const halfChartHeight = (height - margin.top - margin.bottom) / 2;
+    const segmentHeight = halfChartHeight / maxLinesInAnyCanto;
+
     // One vertical bar per canto
     const x = d3.scaleBand()
       .domain(cantos.map(d => d.name))
@@ -270,7 +282,7 @@ function initializeVisualization(bookData) {
       .data(cantos)
       .join("g")
       .attr("class", "canto")
-      .attr("transform", d => `translate(${x(d.name)}, ${height - margin.bottom})`);
+      .attr("transform", d => `translate(${x(d.name)}, ${centerY})`);
 
     cantoGroups.each(function (canto) {
       const group = d3.select(this);
@@ -289,16 +301,20 @@ function initializeVisualization(bookData) {
       .style("font-size", "12px")
       .style("display", "none");
 
+    const middle = Math.floor(lines.length / 2);
 
     group.selectAll(".line-segment")
       .data(lines)
       .join("rect")
       .attr("class", "line-segment")
       .attr("x", 0)
-      .attr("y", (d, i) => -segmentHeight * (i + 1) * .98) // stack upward from bottom
       .attr("width", d => wordScale(d.wordCount))
-      .attr("height", segmentHeight)
-      .attr("fill", "#6495ED")
+      .attr("y", (d, i) => {
+          const middle = Math.floor(lines.length / 2);
+          return (i - middle) * -segmentHeight;
+        })
+      .attr("height", segmentHeight)      
+      .attr("fill", d => canticleColors[canticleName] || "#6495ED")
       .attr("cursor", "pointer")
       .on("mouseover", (event, line) => {
         tooltip
@@ -337,13 +353,21 @@ function initializeVisualization(bookData) {
         
       });
 
-    // Optional: add canto label below bar
+      // Optional: add canto label below bar
+      group.append("text")
+      .attr("x", x.bandwidth() / 2)
+      .attr("y", chartHeight / 2 + 20) // place below the bottom edge
+      .attr("text-anchor", "middle")
+      .attr("font-size", "12px")
+      .attr("font-family", "'IM Fell English SC', serif")
+      .text(canto.name);
+
     });
 
     // Axes
     g.append("g")
       .attr("class", "x-axis")
-      .attr("transform", `translate(0,${height - margin.bottom})`)
+      .attr("transform", d => `translate(${x(d.name)}, ${centerY})`)
       .call(d3.axisBottom(x).tickSize(0).tickPadding(6));
 
     backButton.transition().duration(300).style("opacity", 1);
@@ -406,7 +430,7 @@ function initializeVisualization(bookData) {
       .attr("y", d => y(d.name))
       .attr("width", 0) // start with width 0 for transition
       .attr("height", y.bandwidth())
-      .attr("fill", "#FD8D3C")
+      .attr("fill", d => canticleColors[canticleName] || "#6495ED")
       .attr("cursor", "pointer");
 
     // Attach click handler BEFORE transition
@@ -555,7 +579,7 @@ function initializeVisualization(bookData) {
       .attr("y", height - margin.bottom)
       .attr("width", x.bandwidth())
       .attr("height", 0)
-      .attr("fill", "#82CA9D")
+      .attr("fill", d => canticleColors[canticleName] || "#6495ED")
       .transition()
       .duration(750)
       .attr("y", d => y(d.syllCount))
@@ -654,6 +678,10 @@ function initializeVisualization(bookData) {
         }
       });
     
+    if (navigationHistory.length !== 0) {
+      backButton.transition().duration(300).style("opacity", 1);
+    }
+
     isNavigating = false;
   }
 
