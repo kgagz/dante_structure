@@ -154,7 +154,7 @@ function initializeVisualization(bookData) {
       .style("border", "1px solid #999")
       .style("padding", "6px 10px")
       .style("border-radius", "4px")
-      .style("font-family", "sans-serif")
+      .style("font-family", "'IM Fell English SC', serif")
       .style("pointer-events", "none")
       .style("font-size", "12px")
       .style("display", "none");
@@ -273,40 +273,67 @@ function initializeVisualization(bookData) {
       const lines = canto.children;
       const segmentHeight = (chartHeight / maxLines);
 
-      group.selectAll(".line-segment")
-        .data(lines)
-        .join("rect")
-        .attr("class", "line-segment")
-        .attr("x", 0)
-        .attr("y", (d, i) => -segmentHeight * (i + 1) * .98) // stack upward from bottom
-        .attr("width", d => wordScale(d.wordCount))
-        .attr("height", segmentHeight)
-        .attr("fill", "#6495ED")
-        .attr("cursor", "pointer")
-        .on("click", (event, line) => {
-          event.stopPropagation()
-        
-          // Improved navigation history tracking
-          navigationHistory.push({ 
-            level: "cantos", 
-            parent: currentParent, 
-            name: canto.name,
-            parentName: canticleName,
-            ancestors: navigationHistory.length > 0 ? 
-              [...navigationHistory[navigationHistory.length-1].ancestors, canto.name] : 
-              ["Divine Comedy", canticleName, d.name]
-          });
-          
-          currentParent = canto;
-          currentLevel = "lines";
-          
-          
-          // Perform zoom transition then render lines
-          renderLines(canto.children, canto.name, canticleName);
-          
-        });
+      const tooltip = d3.select("body").append("div")
+      .attr("class", "tooltip")
+      .style("position", "absolute")
+      .style("background", "#fff5cc")
+      .style("border", "1px solid #999")
+      .style("padding", "6px 10px")
+      .style("border-radius", "4px")
+      .style("font-family", "'IM Fell English SC', serif")
+      .style("pointer-events", "none")
+      .style("font-size", "12px")
+      .style("display", "none");
 
-      // Optional: add canto label below bar
+
+    group.selectAll(".line-segment")
+      .data(lines)
+      .join("rect")
+      .attr("class", "line-segment")
+      .attr("x", 0)
+      .attr("y", (d, i) => -segmentHeight * (i + 1) * .98) // stack upward from bottom
+      .attr("width", d => wordScale(d.wordCount))
+      .attr("height", segmentHeight)
+      .attr("fill", "#6495ED")
+      .attr("cursor", "pointer")
+      .on("mouseover", (event, line) => {
+        tooltip
+          .style("display", "block")
+          .html(`<strong>Canto ${canto.name}</strong><br>${lines.length} lines`);
+      })
+      .on("mousemove", (event) => {
+        tooltip
+          .style("left", (event.pageX + 10) + "px")
+          .style("top", (event.pageY - 20) + "px");
+      })
+      .on("mouseout", () => {
+        tooltip.style("display", "none");
+      })
+      .on("click", (event, line) => {
+        event.stopPropagation();
+        tooltip.style("display", "none");
+      
+        // Improved navigation history tracking
+        navigationHistory.push({ 
+          level: "cantos", 
+          parent: currentParent, 
+          name: canto.name,
+          parentName: canticleName,
+          ancestors: navigationHistory.length > 0 ? 
+            [...navigationHistory[navigationHistory.length-1].ancestors, canto.name] : 
+            ["Divine Comedy", canticleName, d.name]
+        });
+        
+        currentParent = canto;
+        currentLevel = "lines";
+        
+        
+        // Perform zoom transition then render lines
+        renderLines(canto.children, canto.name, canticleName);
+        
+      });
+
+    // Optional: add canto label below bar
     });
 
     // Axes
