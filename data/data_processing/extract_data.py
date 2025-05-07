@@ -73,8 +73,9 @@ def read_canticle(canticle):
                 rhyme_data[canto_num][line_num] = rhyme
                 first_letter_data[canto_num][line_num] = first_letter
                 for i in range(len(words)):
-                    # input(f"words[i].split(' | '): {words[i].split(' | ')}")
-                    data[canto_num][line_num][i + 1] = len(words[i].split("|"))
+                    # input(words[i].split("|"))
+                    # input(len(words[i].split("|")) - 1)
+                    data[canto_num][line_num][i + 1] = len(words[i].split("|")) - 1
                 continue
     return data, rhyme_data, first_letter_data
 

@@ -137,7 +137,7 @@ function initializeVisualization(bookData) {
 
     // Height of each canto block based on line count
     const heightScale = d3.scaleLinear()
-      .domain([minLineCount - 10, maxLineCount])
+      .domain([minLineCount - 1, maxLineCount])
       .range([4, y.bandwidth()]);
 
     const barGroup = g.append("g").attr("class", "bar-group");
@@ -381,6 +381,40 @@ function initializeVisualization(bookData) {
     bars.transition()
       .duration(750)
       .attr("width", d => x(d.wordCount) - x(0));
+    
+    // Add left-aligned text inside the bar
+    barGroups.append("text")
+      .attr("x", x(0) + 4)
+      .attr("y", d => y(d.name) + y.bandwidth() / 2) // ← this is the missing part!
+      .attr("dy", "0.35em")
+      .attr("fill", d => (x(d.wordCount) - x(0)) > 40 ? "white" : "#333")
+      .attr("font-size", "12px")
+      .attr("pointer-events", "none")
+      .text(d => 
+          d.first_letter 
+            ? d.first_letter.charAt(0).toUpperCase() + d.first_letter.slice(1) 
+            : ""
+        );
+
+
+    // Add right-aligned text outside the bar
+    const outerLabels = barGroups.append("text")
+      .attr("x", x(0)) // start from x(0) so it moves smoothly
+      .attr("y", d => y(d.name) + y.bandwidth() / 2) // ← this is the missing part!
+      .attr("dy", "0.35em")
+      .attr("fill", "#333")
+      .attr("font-size", "12px")
+      .attr("pointer-events", "none")
+      .text(d => `${d.rhyme}`)
+      .transition()
+      .duration(750)
+      .attr("x", d => x(d.wordCount) + 6); // animate to final position
+
+
+    outerLabels.transition()
+      .duration(750)
+      .attr("x", d => x(d.wordCount) + 6); // animate to correct position
+
     
     // Show back button
     backButton.transition().duration(300).style("opacity", 1);

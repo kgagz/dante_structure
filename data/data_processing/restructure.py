@@ -1,7 +1,7 @@
 import json
 
 
-def transform_data(data):
+def transform_data(data, rhyme_data, letter_data):
     result = {"name": "Divine Comedy", "canticleCount": len(data), "children": []}
 
     for book_name, cantos in data.items():
@@ -24,11 +24,16 @@ def transform_data(data):
                 line_data = {
                     "name": f"Line {line_num}",
                     "wordCount": word_count,
+                    "first_letter": letter_data[book_name][canto_num][line_num],
+                    "rhyme": rhyme_data[book_name][canto_num][line_num],
                     "children": [],
                 }
 
                 for word_num, syll_count in words.items():
-                    word_data = {"name": f"Word {word_num}", "syllCount": syll_count}
+                    word_data = {
+                        "name": f"Word {word_num}",
+                        "syllCount": syll_count,
+                    }
                     line_data["children"].append(word_data)
 
                 canto_data["children"].append(line_data)
@@ -41,11 +46,17 @@ def transform_data(data):
 
 
 # Read input
-with open("commedia_structure.json", "r") as infile:
+with open("../text/commedia_structure.json", "r") as infile:
     input_data = json.load(infile)
 
+with open("../text/commedia_rhymes.json", "r") as infile:
+    rhyme_data = json.load(infile)
+
+with open("../text/commedia_line_letters.json", "r") as infile:
+    letter_data = json.load(infile)
+
 # Transform data
-transformed_data = transform_data(input_data)
+transformed_data = transform_data(input_data, rhyme_data, letter_data)
 
 # Write output
 with open("restructured_commedia.json", "w") as outfile:
