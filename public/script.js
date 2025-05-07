@@ -198,7 +198,7 @@ function initializeVisualization(bookData) {
     g.append("g")
       .attr("class", "x-axis")
       .attr("transform", `translate(0, ${margin.top})`)
-      .call(d3.axisTop(x).ticks(10).tickFormat(d => `${d} cantos`));
+      .call(d3.axisTop(x).ticks(10).tickFormat(d => `${d}`));
 
     // Hide back button at top level
     backButton.transition().duration(300).style("opacity", 0);
@@ -211,7 +211,7 @@ function initializeVisualization(bookData) {
     }
 
     currentLevel = "cantos";
-    updateTitle(`Cantos of ${canticleName}`);
+    updateTitle(`${canticleName}`);
     svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
 
     
@@ -290,13 +290,6 @@ function initializeVisualization(bookData) {
         });
 
       // Optional: add canto label below bar
-      group.append("text")
-        .attr("x", x.bandwidth() / 2)
-        .attr("y", 14)
-        .attr("text-anchor", "middle")
-        .attr("font-size", "10px")
-        .attr("font-family", "'IM Fell English SC', serif")
-        .text(canto.name);
     });
 
     // Axes
@@ -317,7 +310,7 @@ function initializeVisualization(bookData) {
     }
     
     currentLevel = "lines";
-    updateTitle(`Lines in ${cantoName}, ${canticleName}`);
+    updateTitle(`${canticleName} ${cantoName}`);
     
     // Clear previous elements
     g.selectAll(".bar-group").remove();
@@ -438,7 +431,7 @@ function initializeVisualization(bookData) {
     }
     
     currentLevel = "words";
-    updateTitle(`Words of ${lineNum}, ${cantoName}, ${canticleName}`);
+    updateTitle(`${canticleName} ${cantoName}, Line ${lineNum}`);
     
     // Clear previous elements
     g.selectAll(".bar-group").remove();

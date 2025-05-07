@@ -13,7 +13,7 @@ def transform_data(data, rhyme_data, letter_data):
 
         for canto_num, lines in cantos.items():
             canto_data = {
-                "name": f"Canto {canto_num}",
+                "name": f"{canto_num}",
                 "lineCount": len(lines),
                 "children": [],
             }
@@ -22,7 +22,7 @@ def transform_data(data, rhyme_data, letter_data):
                 word_count = len(words)
 
                 line_data = {
-                    "name": f"Line {line_num}",
+                    "name": f"{line_num}",
                     "wordCount": word_count,
                     "first_letter": letter_data[book_name][canto_num][line_num],
                     "rhyme": rhyme_data[book_name][canto_num][line_num],
@@ -31,7 +31,7 @@ def transform_data(data, rhyme_data, letter_data):
 
                 for word_num, syll_count in words.items():
                     word_data = {
-                        "name": f"Word {word_num}",
+                        "name": f"{word_num}",
                         "syllCount": syll_count,
                     }
                     line_data["children"].append(word_data)

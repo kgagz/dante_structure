@@ -57,10 +57,12 @@ def read_canticle(canticle):
                 # input(f"line[:4].strip(): {line_num}")
                 line_num = int(line_num)
                 # print(f"line_num: {line_num}")
-                words = line[4:].split()
+                clean = re.sub(r"[\\,\.!;:?»\n\"'‘’`]", "", line[4:])
+                words = clean.split()
+                # if canticle == "purgatorio" and canto_num == 12 and line_num == 110:
                 # input(f"words: {words}")
                 data[canto_num][line_num] = {}
-                rhyme = ("").join(words[-1].split("|")[-2:]).strip("|\\,.!;:?»\n")
+                rhyme = ("").join(words[-1].split("|")[-2:])
                 rhyme = re.sub(
                     r"^.*?(?=([aeiouàáâäæãåāèéêëēėęîïíīįìôöòóœøōõûüùúūÿ])(?![aeiouàáâäæãåāèéêëēėęîïíīįìôöòóœøōõûüùúūÿ]))",
                     "",
