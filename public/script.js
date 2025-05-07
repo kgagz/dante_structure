@@ -105,25 +105,23 @@ function initializeVisualization(bookData) {
       return;
     }
 
-    // Reset navigation when at top level
+    // Reset navigation
     navigationHistory = [];
     currentLevel = "canticles";
     currentParent = bookData;
     updateTitle("Divine Comedy - Canticles");
-    
+
     // Reset zoom
     svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
 
-    // Clear previous visualization elements
+    // Clear old elements
     g.selectAll(".bar-group").remove();
-    g.selectAll(".x-axis").remove();
+    g.selectAll(".x-axis").remove(); // remove top x-axis
     g.selectAll(".y-axis").remove();
 
-    // Desired visual order from top to bottom
+    // Sort canticles
     const canticleOrder = ["Inferno", "Purgatorio", "Paradiso"];
-
-    // Sort canticles by that order
-    canticles.sort((a, b) => 
+    canticles.sort((a, b) =>
       canticleOrder.indexOf(a.name) - canticleOrder.indexOf(b.name)
     );
 
@@ -132,23 +130,34 @@ function initializeVisualization(bookData) {
     const maxLineCount = d3.max(allLineCounts);
     const minLineCount = d3.min(allLineCounts);
 
-    // Horizontal scale for canto index
+    // Horizontal scale — flush right: start bars from the RIGHT edge
     const x = d3.scaleLinear()
       .domain([0, maxCantoCount])
       .range([margin.left, width - margin.right]);
 
-    // Vertical space per canticle
     const y = d3.scaleBand()
       .domain(canticles.map(d => d.name))
       .range([margin.top, height - margin.bottom])
       .padding(0.3);
 
-    // Height of each canto block based on line count
     const heightScale = d3.scaleLinear()
-      .domain([minLineCount - 1, maxLineCount])
+      .domain([minLineCount - 5, maxLineCount])
       .range([4, y.bandwidth()]);
 
     const barGroup = g.append("g").attr("class", "bar-group");
+
+    // Create tooltip
+    const tooltip = d3.select("body").append("div")
+      .attr("class", "tooltip")
+      .style("position", "absolute")
+      .style("background", "#fff5cc")
+      .style("border", "1px solid #999")
+      .style("padding", "6px 10px")
+      .style("border-radius", "4px")
+      .style("font-family", "sans-serif")
+      .style("pointer-events", "none")
+      .style("font-size", "12px")
+      .style("display", "none");
 
     const canticleGroups = barGroup.selectAll(".canticle")
       .data(canticles)
@@ -159,50 +168,58 @@ function initializeVisualization(bookData) {
     canticleGroups.each(function (canticle) {
       const group = d3.select(this);
       const cantoCount = canticle.children.length;
-      const segmentWidth = (x(1) - x(0)) * 1.2; // 100% width of each unit, no spacing
+      const segmentWidth = (x(1) - x(0)) * 1.2;
 
       group.selectAll(".canto-bar")
         .data(canticle.children)
         .join("rect")
         .attr("class", "canto-bar")
-        .attr("x", (d, i) => x(i))
+        .attr("x", (d, i) => x(maxCantoCount - cantoCount + i)) // right-aligned
         .attr("y", d => y.bandwidth() - heightScale(d.lineCount))
         .attr("width", segmentWidth)
         .attr("height", d => heightScale(d.lineCount))
         .attr("fill", "#6495ED")
         .attr("cursor", "pointer")
         .on("click", (event, d) => {
-          event.stopPropagation()
-          // Improved navigation history tracking
-          navigationHistory.push({ 
-            level: "canticles", 
-            parent: bookData, 
+          event.stopPropagation();
+          tooltip.style("display", "none");
+          navigationHistory.push({
+            level: "canticles",
+            parent: bookData,
             name: canticle.name,
             ancestors: ["Divine Comedy", canticle.name]
           });
-          
           currentParent = canticle;
           currentLevel = "cantos";
-          
           renderCantos(canticle.children, canticle.name);
+        })
+        .on("mouseover", (event, d, i) => {
+          tooltip
+            .style("display", "block")
+            .html(`<strong>Canto ${d.name}</strong><br>${d.lineCount} lines`);
+        })
+        .on("mousemove", (event) => {
+          tooltip
+            .style("left", (event.pageX + 10) + "px")
+            .style("top", (event.pageY - 20) + "px");
+        })
+        .on("mouseout", () => {
+          tooltip.style("display", "none");
         });
     });
 
-    // Y-axis (canticle labels)
+    // Y-axis (canticle names)
     g.append("g")
       .attr("class", "y-axis")
       .attr("transform", `translate(${margin.left},0)`)
       .call(d3.axisLeft(y));
+    
+    // ✅ Top x-axis intentionally removed
 
-    // X-axis (canto index)
-    g.append("g")
-      .attr("class", "x-axis")
-      .attr("transform", `translate(0, ${margin.top})`)
-      .call(d3.axisTop(x).ticks(10).tickFormat(d => `${d}`));
-
-    // Hide back button at top level
+    // Hide back button
     backButton.transition().duration(300).style("opacity", 0);
   }
+
 
   function renderCantos(cantos, canticleName) {
     if (!cantos || cantos.length === 0) {
