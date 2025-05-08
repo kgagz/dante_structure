@@ -75,6 +75,50 @@ function initializeVisualization(bookData) {
     .attr("text-anchor", "middle")
     .attr("dominant-baseline", "middle")
     .text("← Back");
+  
+  const infoBox = svg.append("g")
+    .attr("class", "info-box")
+    .attr("transform", `translate(${(width / 2) - 110}, ${height - 90})`); // top-right corner
+
+  // Background box
+  infoBox.append("rect")
+    .attr("width", 220)
+    .attr("height", 60)
+    .attr("rx", 8)
+    .attr("fill", "#fffce6")
+    .attr("stroke", "#ccc")
+    .attr("stroke-width", 1)
+    .attr("opacity", 0.75);
+
+  // Instruction text
+  infoBox.append("text")
+    .attr("x", 110)                         // center of the box
+    .attr("y", 20)
+    .attr("font-size", "14px")
+    .attr("font-family", "'IM Fell English SC', serif")
+    .attr("fill", "#333")
+    .attr("text-anchor", "middle")
+    .text("Zoom with scroll");
+
+  // Add additional lines
+  infoBox.append("text")
+    .attr("x", 110)
+    .attr("y", 35)
+    .attr("font-size", "14px")
+    .attr("font-family", "'IM Fell English SC', serif")
+    .attr("fill", "#333")
+    .attr("text-anchor", "middle")
+    .text("Click bars to explore");
+
+  infoBox.append("text")
+    .attr("x", 110)
+    .attr("y", 50)
+    .attr("text-anchor", "middle")
+    .attr("font-size", "14px")
+    .attr("font-family", "'IM Fell English SC', serif")
+    .attr("fill", "#333")
+    .text("Click `Back` button to go back");
+
 
   // Improved navigation state tracking
   let currentLevel = "canticles";
@@ -106,6 +150,7 @@ function initializeVisualization(bookData) {
   renderCanticles(bookData.children || []);
 
   function renderCanticles(canticles) {
+    svg.transition().duration(0).call(zoom.transform, d3.zoomIdentity);
     if (!canticles || canticles.length === 0) {
       console.error("No canticle data available to render");
       return;
@@ -231,6 +276,7 @@ function initializeVisualization(bookData) {
 
 
   function renderCantos(cantos, canticleName) {
+    svg.transition().duration(0).call(zoom.transform, d3.zoomIdentity);
     if (!cantos || cantos.length === 0) {
       console.error("No canto data available to render");
       return;
@@ -321,7 +367,7 @@ function initializeVisualization(bookData) {
       .on("mouseover", (event, line) => {
         tooltip
           .style("display", "block")
-          .html(`<strong>Canto ${canto.name}</strong><br>${lines.length} lines`);
+          .html(`<strong>Canto ${canto.name}</strong><br>Line ${line.name}/${lines.length}<br>${line.wordCount} words`);
       })
       .on("mousemove", (event) => {
         tooltip
@@ -378,6 +424,7 @@ function initializeVisualization(bookData) {
   }
 
   function renderLines(lines, cantoName, canticleName) {
+    svg.transition().duration(0).call(zoom.transform, d3.zoomIdentity);
     if (!lines || lines.length === 0) {
       console.error("No line data available to render");
       return;
@@ -513,6 +560,7 @@ function initializeVisualization(bookData) {
   }
 
   function renderWords(words, lineNum, cantoName, canticleName) {
+    svg.transition().duration(0).call(zoom.transform, d3.zoomIdentity);
     if (!words || words.length === 0) {
       console.error("No word data available to render");
       return;
