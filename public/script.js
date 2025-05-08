@@ -122,6 +122,7 @@ function initializeVisualization(bookData) {
 
     // Clear old elements
     g.selectAll(".y-axis-label").remove();
+    g.selectAll(".x-axis-label").remove();
     d3.selectAll(".tooltip").remove();
     g.selectAll(".bar-group").remove();
     g.selectAll(".x-axis").remove(); // remove top x-axis
@@ -242,6 +243,7 @@ function initializeVisualization(bookData) {
     
     // Clear previous elements
     g.selectAll(".y-axis-label").remove();
+    g.selectAll(".x-axis-label").remove();
     d3.selectAll(".tooltip").remove();
     g.selectAll(".bar-group").remove();
     g.selectAll(".x-axis").remove();
@@ -386,6 +388,7 @@ function initializeVisualization(bookData) {
     
     // Clear previous elements
     g.selectAll(".y-axis-label").remove();
+    g.selectAll(".x-axis-label").remove();
     d3.selectAll(".tooltip").remove();
     g.selectAll(".bar-group").remove();
     g.selectAll(".x-axis").remove();
@@ -487,6 +490,17 @@ function initializeVisualization(bookData) {
       .transition()
       .duration(750)
       .attr("x", d => x(d.wordCount) + 6); // animate to final position
+    
+    g.append("text")
+      .attr("class", "x-axis-label")
+      .attr("text-anchor", "middle")
+      .attr("x", margin.left + ((width - margin.right - margin.left) * 0.125)) // midpoint of your X range
+      .attr("y", margin.top - 30) // slightly above the top axis
+      .attr("font-family", "'IM Fell English SC', serif")
+      .attr("font-size", "14px")
+      .attr("fill", "#333")
+      .text("Word Counts");
+
 
 
     outerLabels.transition()
@@ -512,6 +526,7 @@ function initializeVisualization(bookData) {
     g.selectAll(".y-axis-label").remove();
     d3.selectAll(".tooltip").remove();
     g.selectAll(".x-axis").remove();
+    g.selectAll(".x-axis-label").remove();
     g.selectAll(".y-axis").remove();
     
     // Create scales
@@ -589,13 +604,24 @@ function initializeVisualization(bookData) {
     barGroups.append("text")
       .text(d => d.text)  // Use each word's .text
       .attr("x", d => x(d.name) + x.bandwidth() / 2)
-      .attr("y", d => y(d.syllCount) + 14)
-      .attr("fill", "white")
+      .attr("y", d => d.syllCount == 0 ? y(0) - 14: y(d.syllCount) + 14)
+      .attr("fill", d => d.syllCount === 0 ? (canticleColors[canticleName]) : "white")
       .attr("text-anchor", "middle")
       .attr("font-size", "18px")
       .attr("font-family", "'IM Fell English SC', serif")
       .attr("pointer-events", "none");
     
+    // Add underline only if syllCount == 0
+    barGroups
+      .filter(d => d.syllCount === 0)
+      .append("line")
+      .attr("x1", d => x(d.name) + x.bandwidth() / 2 - 12)
+      .attr("x2", d => x(d.name) + x.bandwidth() / 2 + 12)
+      .attr("y1", d => y(0) - 13)
+      .attr("y2", d => y(0) - 13)
+      .attr("stroke", canticleColors[canticleName])
+      .attr("stroke-width", 1.5);
+        
     // Show back button
     backButton.transition().duration(300).style("opacity", 1);
   }
