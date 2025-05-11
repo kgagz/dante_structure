@@ -2,7 +2,7 @@
 fetch("restructured_commedia.json")
   .then(response => response.json())
   .then(data => {
-    console.log(data);
+    // console.log(data);
 
     // Initialize the visualization with transformed data
     initializeVisualization(data);
@@ -83,7 +83,7 @@ function initializeVisualization(bookData) {
   // Background box
   infoBox.append("rect")
     .attr("width", 220)
-    .attr("height", 60)
+    .attr("height", 80)
     .attr("rx", 8)
     .attr("fill", "#fffce6")
     .attr("stroke", "#ccc")
@@ -99,8 +99,7 @@ function initializeVisualization(bookData) {
     .attr("fill", "#333")
     .attr("text-anchor", "middle")
     .text("Zoom with scroll");
-
-  // Add additional lines
+  
   infoBox.append("text")
     .attr("x", 110)
     .attr("y", 35)
@@ -108,17 +107,26 @@ function initializeVisualization(bookData) {
     .attr("font-family", "'IM Fell English SC', serif")
     .attr("fill", "#333")
     .attr("text-anchor", "middle")
-    .text("Click bars to explore");
+    .text("Click + drag to move around");
 
+  // Add additional lines
   infoBox.append("text")
     .attr("x", 110)
     .attr("y", 50)
+    .attr("font-size", "14px")
+    .attr("font-family", "'IM Fell English SC', serif")
+    .attr("fill", "#333")
+    .attr("text-anchor", "middle")
+    .text("Click bars to dive deeper");
+
+  infoBox.append("text")
+    .attr("x", 110)
+    .attr("y", 65)
     .attr("text-anchor", "middle")
     .attr("font-size", "14px")
     .attr("font-family", "'IM Fell English SC', serif")
     .attr("fill", "#333")
     .text("Click `Back` button to go back");
-
 
   // Improved navigation state tracking
   let currentLevel = "canticles";
@@ -412,11 +420,6 @@ function initializeVisualization(bookData) {
 
     });
 
-    // Axes
-    g.append("g")
-      .attr("class", "x-axis")
-      .attr("transform", d => `translate(${x(d.name)}, ${centerY})`)
-      .call(d3.axisBottom(x).tickSize(0).tickPadding(6));
 
     backButton.transition().duration(300).style("opacity", 1);
 
